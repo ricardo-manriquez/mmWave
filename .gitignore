@@ -1,0 +1,10 @@
+bin/
+lib/
+lib64/
+__pycache__/
+src/build/
+src/install/
+src/log
+async_prompt.py
+cli.py
+pyvenv.cfg
