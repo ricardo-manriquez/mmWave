@@ -146,6 +146,16 @@ class MMWaveNode(Node):
             self._publish_float('heartrate', response["heartrate"])
         elif type(cmd) == type(self.cmds["REPORT_HEARTRATE_WAVEFORM"]):
             self._publish_array('heartrate_waveform', response["waveform"])
+        elif type(cmd) == type(self.cmds["REPORT_SLEEP_STATE"]):
+            self._publish_string('sleep_state', response["state"])
+        elif type(cmd) == type(self.cmds["REPORT_AWAKE_TIME"]):
+            self._publish_int('awake_time', response["length"])
+        elif type(cmd) == type(self.cmds["REPORT_SLEEP_STATUS"]):
+            self._publish_sleep_status(response)
+        elif type(cmd) == type(self.cmds["REPORT_SLEEP_QUALITY_ANALYSIS"]):
+            self._publish_sleep_analysis(response)
+        elif type(cmd) == type(self.cmds["REPORT_ABNORMAL_SLEEP"]):
+            self._publish_string('sleep_abnormality', response["abnormality"])
 
     # Helper methods for publishing
     def _publish_bool(self, topic, value):
@@ -188,36 +198,11 @@ class MMWaveNode(Node):
 
     def _publish_sleep_status(self, data):
         if 'sleep_status' in self._publishers and 'sleep_status' not in self.active_filters:
-            status = {
-                'occupation': bool(data[6]),
-                'status': MessageTypes.SLEEP_STATES[data[7]],
-                'rr_avg': data[8],
-                'hr_avg': data[9],
-                'turnover': data[10],
-                'large_mov': data[11],
-                'small_mov': data[12],
-                'apnea': data[13]
-            }
-            # Convert to ROS message based on your needs
-            self._publish_string('sleep_status', str(status))
+            self._publish_string('sleep_status', str(data))
 
     def _publish_sleep_analysis(self, data):
         if 'sleep_analysis' in self._publishers and 'sleep_analysis' not in self.active_filters:
-            analysis_data = struct.unpack(">BH9B", data[6:18])
-            analysis = {
-                'quality': analysis_data[0],
-                'sleep_time': analysis_data[1],
-                'awake_time': analysis_data[2],
-                'light_sleep_time': analysis_data[3],
-                'deep_sleep_time': analysis_data[4],
-                'out_of_bed_time': analysis_data[5],
-                'out_of_bed_times': analysis_data[6],
-                'turnovers': analysis_data[7],
-                'rr_avg': analysis_data[8],
-                'hr_avg': analysis_data[9]
-            }
-            # Convert to ROS message based on your needs
-            self._publish_string('sleep_analysis', str(analysis))
+            self._publish_string('sleep_analysis', str(data))
 
 
 def main(args=None):
