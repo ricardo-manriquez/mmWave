@@ -136,8 +136,16 @@ class MMWaveNode(Node):
             self._publish_array('respiratory_waveform', response["waveform"])
         elif type(cmd) == type(self.cmds["REPORT_BED_OCCUPATION"]):
             self._publish_string('bed_status', response["occupation"])
-        elif type(cmd) == type(self.cmds[""]):
-            self._publish_int('movement', response["movement"])
+        elif type(cmd) == type(self.cmds["REPORT_ABNORMAL_SLEEP"]):
+            self._publish_string('sleep_abnormality', response["abnormality"])
+        elif type(cmd) == type(self.cmds["REPORT_SLEEP_QUALITY_RATING"]):
+            self._publish_string('sleep_quality', response["quality"])
+        elif type(cmd) == type(self.cmds["REPORT_ABNORMAL_STRUGGLING"]):
+            self._publish_string('struggling', response["struggling"])
+        elif type(cmd) == type(self.cmds["REPORT_HEARTRATE"]):
+            self._publish_float('heartrate', response["heartrate"])
+        elif type(cmd) == type(self.cmds["REPORT_HEARTRATE_WAVEFORM"]):
+            self._publish_array('heartrate_waveform', response["waveform"])
 
     # Helper methods for publishing
     def _publish_bool(self, topic, value):
