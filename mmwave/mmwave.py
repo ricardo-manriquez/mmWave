@@ -117,46 +117,61 @@ class MMWaveNode(Node):
             self.ser.close()
 
     def command_callback(self, cmd, response):
-        if type(cmd) == self.cmds["REPORT_HUMAN_PRESENCE"]:
+        print(cmd, response)
+        if type(cmd) == type(self.cmds["REPORT_HUMAN_PRESENCE"]):
             self._publish_bool('presence', response["presence"])
-        elif type(cmd) == self.cmds["REPORT_HUMAN_SPORTS_INFORMATION"]:
+        elif type(cmd) == type(self.cmds["REPORT_HUMAN_SPORTS_INFORMATION"]):
             self._publish_string('activity', response["activity"])
-        elif type(cmd) == self.cmds["REPORT_HUMAN_BODY_MOVEMENT"]:
+        elif type(cmd) == type(self.cmds["REPORT_HUMAN_BODY_MOVEMENT"]):
+            self._publish_int('movement', response["movement"])
+        elif type(cmd) == type(self.cmds["REPORT_HUMAN_DISTANCE"]):
+            self._publish_int('distance', response["distance"])
+        elif type(cmd) == type(self.cmds["REPORT_HUMAN_POSITION"]):
+            self._publish_position(response["x"], response["y"], response["z"])
+        elif type(cmd) == type(self.cmds["REPORT_BREATHING_INFORMATION"]):
+            self._publish_string('breathing', response["breathing"])
+        elif type(cmd) == type(self.cmds["REPORT_RESPIRATORY_RATE"]):
+            self._publish_int('respiratory_rate', response["respiratoryrate"])
+        elif type(cmd) == type(self.cmds["REPORT_RESPIRATORY_WAVEFORM"]):
+            self._publish_array('respiratory_waveform', response["waveform"])
+        elif type(cmd) == type(self.cmds["REPORT_BED_OCCUPATION"]):
+            self._publish_string('bed_status', response["occupation"])
+        elif type(cmd) == type(self.cmds[""]):
             self._publish_int('movement', response["movement"])
 
     # Helper methods for publishing
     def _publish_bool(self, topic, value):
-        if topic in self._publishers and self.filter_check(topic):
+        if topic in self._publishers and topic not in self.active_filters:
             msg = Bool()
             msg.data = value
             self._publishers[topic].publish(msg)
 
     def _publish_int(self, topic, value):
-        if topic in self._publishers and self.filter_check(topic):
+        if topic in self._publishers and topic not in self.active_filters:
             msg = Int32()
             msg.data = value
             self._publishers[topic].publish(msg)
 
     def _publish_float(self, topic, value):
-        if topic in self._publishers and self.filter_check(topic):
+        if topic in self._publishers and topic not in self.active_filters:
             msg = Float32()
             msg.data = value
             self._publishers[topic].publish(msg)
 
     def _publish_string(self, topic, value):
-        if topic in self._publishers and self.filter_check(topic):
+        if topic in self._publishers and topic not in self.active_filters:
             msg = String()
             msg.data = value
             self._publishers[topic].publish(msg)
 
     def _publish_array(self, topic, values):
-        if topic in self._publishers and self.filter_check(topic):
+        if topic in self._publishers and topic not in self.active_filters:
             msg = Float32MultiArray()
             msg.data = values
             self._publishers[topic].publish(msg)
 
     def _publish_position(self, x, y, z):
-        if 'position' in self._publishers and self.filter_check('position'):
+        if 'position' in self._publishers and 'position' not in self.active_filters:
             msg = Point()
             msg.x = float(x)
             msg.y = float(y)
@@ -164,7 +179,7 @@ class MMWaveNode(Node):
             self._publishers['position'].publish(msg)
 
     def _publish_sleep_status(self, data):
-        if 'sleep_status' in self._publishers and self.filter_check('sleep_status'):
+        if 'sleep_status' in self._publishers and 'sleep_status' not in self.active_filters:
             status = {
                 'occupation': bool(data[6]),
                 'status': MessageTypes.SLEEP_STATES[data[7]],
@@ -179,7 +194,7 @@ class MMWaveNode(Node):
             self._publish_string('sleep_status', str(status))
 
     def _publish_sleep_analysis(self, data):
-        if 'sleep_analysis' in self._publishers and self.filter_check('sleep_analysis'):
+        if 'sleep_analysis' in self._publishers and 'sleep_analysis' not in self.active_filters:
             analysis_data = struct.unpack(">BH9B", data[6:18])
             analysis = {
                 'quality': analysis_data[0],
