@@ -117,7 +117,85 @@ class MMWaveNode(Node):
             self.ser.close()
 
     def command_callback(self, cmd, response):
-        print(cmd, response)
+        if type(cmd) == self.cmds["REPORT_HUMAN_PRESENCE"]:
+            self._publish_bool('presence', response["presence"])
+        elif type(cmd) == self.cmds["REPORT_HUMAN_SPORTS_INFORMATION"]:
+            self._publish_string('activity', response["activity"])
+        elif type(cmd) == self.cmds["REPORT_HUMAN_BODY_MOVEMENT"]:
+            self._publish_int('movement', response["movement"])
+
+    # Helper methods for publishing
+    def _publish_bool(self, topic, value):
+        if topic in self._publishers and self.filter_check(topic):
+            msg = Bool()
+            msg.data = value
+            self._publishers[topic].publish(msg)
+
+    def _publish_int(self, topic, value):
+        if topic in self._publishers and self.filter_check(topic):
+            msg = Int32()
+            msg.data = value
+            self._publishers[topic].publish(msg)
+
+    def _publish_float(self, topic, value):
+        if topic in self._publishers and self.filter_check(topic):
+            msg = Float32()
+            msg.data = value
+            self._publishers[topic].publish(msg)
+
+    def _publish_string(self, topic, value):
+        if topic in self._publishers and self.filter_check(topic):
+            msg = String()
+            msg.data = value
+            self._publishers[topic].publish(msg)
+
+    def _publish_array(self, topic, values):
+        if topic in self._publishers and self.filter_check(topic):
+            msg = Float32MultiArray()
+            msg.data = values
+            self._publishers[topic].publish(msg)
+
+    def _publish_position(self, x, y, z):
+        if 'position' in self._publishers and self.filter_check('position'):
+            msg = Point()
+            msg.x = float(x)
+            msg.y = float(y)
+            msg.z = float(z)
+            self._publishers['position'].publish(msg)
+
+    def _publish_sleep_status(self, data):
+        if 'sleep_status' in self._publishers and self.filter_check('sleep_status'):
+            status = {
+                'occupation': bool(data[6]),
+                'status': MessageTypes.SLEEP_STATES[data[7]],
+                'rr_avg': data[8],
+                'hr_avg': data[9],
+                'turnover': data[10],
+                'large_mov': data[11],
+                'small_mov': data[12],
+                'apnea': data[13]
+            }
+            # Convert to ROS message based on your needs
+            self._publish_string('sleep_status', str(status))
+
+    def _publish_sleep_analysis(self, data):
+        if 'sleep_analysis' in self._publishers and self.filter_check('sleep_analysis'):
+            analysis_data = struct.unpack(">BH9B", data[6:18])
+            analysis = {
+                'quality': analysis_data[0],
+                'sleep_time': analysis_data[1],
+                'awake_time': analysis_data[2],
+                'light_sleep_time': analysis_data[3],
+                'deep_sleep_time': analysis_data[4],
+                'out_of_bed_time': analysis_data[5],
+                'out_of_bed_times': analysis_data[6],
+                'turnovers': analysis_data[7],
+                'rr_avg': analysis_data[8],
+                'hr_avg': analysis_data[9]
+            }
+            # Convert to ROS message based on your needs
+            self._publish_string('sleep_analysis', str(analysis))
+
 
 def main(args=None):
     rclpy.init(args=args)
