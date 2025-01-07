@@ -1,6 +1,6 @@
 import abc
 import struct
-from util import fill_checksum
+from .util import fill_checksum
 
 HEADER = b"\x53\x59"
 FOOTER = b"\x54\x43"

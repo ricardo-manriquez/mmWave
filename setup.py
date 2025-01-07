@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'mmWave'
+package_name = 'mmwave'
 
 setup(
     name=package_name,
@@ -23,8 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mmwave_publisher = mmWave.mmWave:main',
-            'mmwave_subscriber = mmWave.subscriber_node:main',
+            'mmwave_publisher = mmwave.mmwave:main',
+            'mmwave_subscriber = mmwave.subscriber_node:main',
         ],
     },
 )

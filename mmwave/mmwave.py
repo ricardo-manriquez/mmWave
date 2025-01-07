@@ -5,9 +5,10 @@ import serial
 from std_msgs.msg import Float32, Bool, Int32, String, Float32MultiArray
 from geometry_msgs.msg import Point
 
-from commands import commands
-from util import checksum, check_pkt, fill_checksum
+from .driver.commands import commands
+from .driver.util import checksum, check_pkt, fill_checksum
 import struct
+import select
 
 #from .mmwave_decoder import MMWaveDecoder
 #from .mmwave_defs import FilterCategories, TOPIC_GROUPS
@@ -57,11 +58,11 @@ class MMWaveNode(Node):
                 self.cmd_dict[command.control] = {}
             self.cmd_dict[command.control][command.command] = command()
             self.cmds[command.__name__] = self.cmd_dict[command.control][command.command]
-        
-        
+
+
         # serial port
         self.ser = ser
-        
+
     def check_filter_parameter(self):
         """check if the filter parameter has been updated"""
         filters_str = self.get_parameter('filters').value
@@ -77,16 +78,19 @@ class MMWaveNode(Node):
         # if no filters are active, all topics are active
         if not self.active_filters or FilterCategories.ALL in self.active_filters:
             return True
-            
+
         # check if the topic is in any of the active filter categories
         for filter_category in self.active_filters:
             if filter_category in TOPIC_GROUPS and topic_name in TOPIC_GROUPS[filter_category]:
                 return True
         return False
 
+    def set_callback(self, callback):
+        self.callback = callback
+
     def interpret_package(self, pkt):
         try:
-            cmd = self.cmd_dict[pkt[2].to_bytes()][pkt[3].to_bytes()]
+            cmd = self.cmd_dict[pkt[2].to_bytes(1, "little")][pkt[3].to_bytes(1, "little")]
             response = None
             if cmd.name() in self.stack:
                 self.stack[cmd.name()].set()
@@ -117,22 +121,22 @@ class MMWaveNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    
+
     ser = serial.Serial(
-        port='/dev/ttyACM0',
+        port='/dev/ttyACM2',
         baudrate=115200,
         bytesize=serial.EIGHTBITS,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         timeout=1
     )
-    
+
     node = MMWaveNode(ser)
-    
-    rclpy.spin(node)
+    node.set_callback(node.command_callback)
+    ser.write(b"0")
     while True:
         rclpy.spin_once(node, timeout_sec=0)
-        r, w, x = select.select((ser),(),())
+        r, w, x = select.select((ser,),(),(), 0.1)
         if ser in r:
             b = ser.read(6)
             if b[0:2] == b'\x53\x59':
