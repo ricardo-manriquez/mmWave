@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 import serial
-from std_msgs.msg import Float32, Bool, Int32, String, Float32MultiArray
+from std_msgs.msg import Float32, Bool, Int32, String, Int32MultiArray
 from geometry_msgs.msg import Point
 
 from .driver.commands import commands
@@ -22,8 +22,8 @@ class MMWaveNode(Node):
 
         # create publishers
         self._publishers = {
-            'heartrate': self.create_publisher(Float32, 'mmwave/heartrate', 10),
-            'heartrate_waveform': self.create_publisher(Float32MultiArray, 'mmwave/heartrate_waveform', 10),
+            'heartrate': self.create_publisher(Int32, 'mmwave/heartrate', 10),
+            'heartrate_waveform': self.create_publisher(Int32MultiArray, 'mmwave/heartrate_waveform', 10),
             'presence': self.create_publisher(Bool, 'mmwave/presence', 10),
             'distance': self.create_publisher(Int32, 'mmwave/distance', 10),
             'position': self.create_publisher(Point, 'mmwave/position', 10),
@@ -31,7 +31,7 @@ class MMWaveNode(Node):
             'activity': self.create_publisher(String, 'mmwave/activity', 10),
             'breathing': self.create_publisher(String, 'mmwave/breathing', 10),
             'respiratory_rate': self.create_publisher(Int32, 'mmwave/respiratory_rate', 10),
-            'respiratory_waveform': self.create_publisher(Float32MultiArray, 'mmwave/respiratory_waveform', 10),
+            'respiratory_waveform': self.create_publisher(Int32MultiArray, 'mmwave/respiratory_waveform', 10),
             'bed_status': self.create_publisher(String, 'mmwave/bed_status', 10),
             'sleep_state': self.create_publisher(String, 'mmwave/sleep_state', 10),
             'sleep_status': self.create_publisher(String, 'mmwave/sleep_status', 10),
@@ -117,7 +117,7 @@ class MMWaveNode(Node):
             self.ser.close()
 
     def command_callback(self, cmd, response):
-        print(cmd, response)
+        #print(cmd, response)
         if type(cmd) == type(self.cmds["REPORT_HUMAN_PRESENCE"]):
             self._publish_bool('presence', response["presence"])
         elif type(cmd) == type(self.cmds["REPORT_HUMAN_SPORTS_INFORMATION"]):
@@ -143,7 +143,7 @@ class MMWaveNode(Node):
         elif type(cmd) == type(self.cmds["REPORT_ABNORMAL_STRUGGLING"]):
             self._publish_string('struggling', response["struggling"])
         elif type(cmd) == type(self.cmds["REPORT_HEARTRATE"]):
-            self._publish_float('heartrate', response["heartrate"])
+            self._publish_int('heartrate', response["heartrate"])
         elif type(cmd) == type(self.cmds["REPORT_HEARTRATE_WAVEFORM"]):
             self._publish_array('heartrate_waveform', response["waveform"])
         elif type(cmd) == type(self.cmds["REPORT_SLEEP_STATE"]):
@@ -184,7 +184,7 @@ class MMWaveNode(Node):
 
     def _publish_array(self, topic, values):
         if topic in self._publishers and topic not in self.active_filters:
-            msg = Float32MultiArray()
+            msg = Int32MultiArray()
             msg.data = values
             self._publishers[topic].publish(msg)
 

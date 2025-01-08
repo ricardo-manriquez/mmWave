@@ -370,8 +370,8 @@ class REPORT_SLEEP_STATUS(Command):
             "apnea": pkt[13],
         }
 
-class REPORT_SLEEP_QUALITY_ANALISYS(Command):
-    """Report sleep quality analisys"""
+class REPORT_SLEEP_QUALITY_ANALYSIS(Command):
+    """Report sleep quality analysis"""
     control = b'\x84'
     command = b'\x0D'
     report = True
@@ -558,8 +558,8 @@ class CMD_QUERY_ABNORMAL_SLEEP(Command):
         return {"abnormality": ["less than 4 hours", "more than 12 hours", "Normal", "None"][pkt[6]]}
 
 
-class CMD_QUERY_SLEEP_QUALITY_ANALISYS(Command):
-    """Query sleep quality analisys"""
+class CMD_QUERY_SLEEP_QUALITY_ANALYSIS(Command):
+    """Query sleep quality analysis"""
     control = b'\x84'
     command = b'\x8F'
     def process(self, pkt):
@@ -716,7 +716,7 @@ commands = (
     REPORT_DEEP_SLEEP_TIME,
     REPORT_SLEEP_QUALITY_SCORE,
     REPORT_SLEEP_STATUS,
-    REPORT_SLEEP_QUALITY_ANALISYS,
+    REPORT_SLEEP_QUALITY_ANALYSIS,
     REPORT_ABNORMAL_SLEEP,
     CMD_ACTIVATE_SLEEP_MODE,
     REPORT_SLEEP_QUALITY_RATING,
@@ -736,7 +736,7 @@ commands = (
     CMD_QUERY_SLEEP_MODE_REPORT,
     CMD_QUERY_SLEEP_STATUS,
     CMD_QUERY_ABNORMAL_SLEEP,
-    CMD_QUERY_SLEEP_QUALITY_ANALISYS,
+    CMD_QUERY_SLEEP_QUALITY_ANALYSIS,
     CMD_QUERY_SLEEP_QUALITY_RATING,
     CMD_QUERY_ABNORMAL_STRUGGLING,
     CMD_QUERY_UNOCCUPIED_STATUS,
