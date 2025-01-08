@@ -3,15 +3,13 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Float32, Bool, Int32, String, Int32MultiArray
+from ros_healthcare_msg.msg import HR, HRV, RR
 from geometry_msgs.msg import Point
 
 from .driver.commands import commands
 from .driver.util import checksum, check_pkt, fill_checksum
 import struct
 import select
-
-#from .mmwave_decoder import MMWaveDecoder
-#from .mmwave_defs import FilterCategories, TOPIC_GROUPS
 
 class MMWaveNode(Node):
     def __init__(self, ser):
@@ -22,15 +20,15 @@ class MMWaveNode(Node):
 
         # create publishers
         self._publishers = {
-            'heartrate': self.create_publisher(Int32, 'mmwave/heartrate', 10),
-            'heartrate_waveform': self.create_publisher(Int32MultiArray, 'mmwave/heartrate_waveform', 10),
+            'heartrate': self.create_publisher(HR, 'mmwave/heartrate', 10),
+            'heartrate_waveform': self.create_publisher(HRV, 'mmwave/heartrate_waveform', 10),
             'presence': self.create_publisher(Bool, 'mmwave/presence', 10),
             'distance': self.create_publisher(Int32, 'mmwave/distance', 10),
             'position': self.create_publisher(Point, 'mmwave/position', 10),
             'movement': self.create_publisher(Int32, 'mmwave/movement', 10),
             'activity': self.create_publisher(String, 'mmwave/activity', 10),
             'breathing': self.create_publisher(String, 'mmwave/breathing', 10),
-            'respiratory_rate': self.create_publisher(Int32, 'mmwave/respiratory_rate', 10),
+            'respiratory_rate': self.create_publisher(RR, 'mmwave/respiratory_rate', 10),
             'respiratory_waveform': self.create_publisher(Int32MultiArray, 'mmwave/respiratory_waveform', 10),
             'bed_status': self.create_publisher(String, 'mmwave/bed_status', 10),
             'sleep_state': self.create_publisher(String, 'mmwave/sleep_state', 10),

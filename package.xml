@@ -13,6 +13,7 @@
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
+  <depend>ros_healthcare_msg</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
