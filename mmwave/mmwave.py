@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Float32, Bool, Int32, String, Int32MultiArray
-from ros_healthcare_msg.msg import HR, RR, HRheader, RRheader
+from ros2_hc_msgs.msg import HR, RR, HRHeader, RRHeader
 from geometry_msgs.msg import Point
 
 from .driver.commands import commands
@@ -60,7 +60,7 @@ class MMWaveNode(Node):
 
         # serial port
         self.ser = ser
-        
+
         self.hr_seq = 0
         self.rr_seq = 0
 
@@ -175,20 +175,18 @@ class MMWaveNode(Node):
         if topic in self._publishers and topic not in self.active_filters:
             self.hr_seq += 1
             msg = HR()
-            msg.hr = float(value)
+            msg.hr = value
             msg.hr_quality = 0
-            header = HRheader()
+            header = HRHeader()
             header.device_serial_number = "0"
             header.unit = "bpm"
-            header.sampling_frequency = 0.33
-            header.resolution = 1
+            header.sampling_frequency = 1
+            header.resolution = 1.0
             header.accuracy = 0.85
-            header.max_range = 100
-            header.min_range = 0
-            header.stride_length = 0
-            header.window_size = 0
-            header.single_refresh_rate = 0.33
-            header.header.seq = self.hr_seq
+            header.max_range = 100.0
+            header.min_range = 0.0
+            header.stride_length = 0.0
+            header.window_size = 0.0
             header.header.stamp = self.get_clock().now().to_msg()
             msg.header = header
             self._publishers[topic].publish(msg)
@@ -199,18 +197,16 @@ class MMWaveNode(Node):
             msg = RR()
             msg.rr = float(value)
             msg.rr_quality = 0
-            header = RRheader()
+            header = RRHeader()
             header.device_serial_number = "0"
             header.unit = "bpm"
-            header.sampling_frequency = 0.33
-            header.resolution = 1
+            header.sampling_frequency = 1
+            header.resolution = 1.0
             header.accuracy = 0.9
-            header.max_range = 25
-            header.min_range = 0
-            header.stride_length = 0
-            header.window_size = 0
-            header.single_refresh_rate = 0.33
-            header.header.seq = self.rr_seq
+            header.max_range = 25.0
+            header.min_range = 0.0
+            header.stride_length = 0.0
+            header.window_size = 0.0
             header.header.stamp = self.get_clock().now().to_msg()
             msg.header = header
             self._publishers[topic].publish(msg)
