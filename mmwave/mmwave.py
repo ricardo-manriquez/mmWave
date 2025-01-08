@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 import serial
 from std_msgs.msg import Float32, Bool, Int32, String, Int32MultiArray
-from ros_healthcare_msg.msg import HR, HRV, RR
+from ros_healthcare_msg.msg import HR, RR, HRheader, RRheader
 from geometry_msgs.msg import Point
 
 from .driver.commands import commands
@@ -21,7 +21,7 @@ class MMWaveNode(Node):
         # create publishers
         self._publishers = {
             'heartrate': self.create_publisher(HR, 'mmwave/heartrate', 10),
-            'heartrate_waveform': self.create_publisher(HRV, 'mmwave/heartrate_waveform', 10),
+            'heartrate_waveform': self.create_publisher(Int32MultiArray, 'mmwave/heartrate_waveform', 10),
             'presence': self.create_publisher(Bool, 'mmwave/presence', 10),
             'distance': self.create_publisher(Int32, 'mmwave/distance', 10),
             'position': self.create_publisher(Point, 'mmwave/position', 10),
@@ -60,6 +60,9 @@ class MMWaveNode(Node):
 
         # serial port
         self.ser = ser
+        
+        self.hr_seq = 0
+        self.rr_seq = 0
 
     def check_filter_parameter(self):
         """check if the filter parameter has been updated"""
@@ -129,7 +132,7 @@ class MMWaveNode(Node):
         elif type(cmd) == type(self.cmds["REPORT_BREATHING_INFORMATION"]):
             self._publish_string('breathing', response["breathing"])
         elif type(cmd) == type(self.cmds["REPORT_RESPIRATORY_RATE"]):
-            self._publish_int('respiratory_rate', response["respiratoryrate"])
+            self._publish_rr('respiratory_rate', response["respiratoryrate"])
         elif type(cmd) == type(self.cmds["REPORT_RESPIRATORY_WAVEFORM"]):
             self._publish_array('respiratory_waveform', response["waveform"])
         elif type(cmd) == type(self.cmds["REPORT_BED_OCCUPATION"]):
@@ -141,7 +144,7 @@ class MMWaveNode(Node):
         elif type(cmd) == type(self.cmds["REPORT_ABNORMAL_STRUGGLING"]):
             self._publish_string('struggling', response["struggling"])
         elif type(cmd) == type(self.cmds["REPORT_HEARTRATE"]):
-            self._publish_int('heartrate', response["heartrate"])
+            self._publish_hr('heartrate', response["heartrate"])
         elif type(cmd) == type(self.cmds["REPORT_HEARTRATE_WAVEFORM"]):
             self._publish_array('heartrate_waveform', response["waveform"])
         elif type(cmd) == type(self.cmds["REPORT_SLEEP_STATE"]):
@@ -166,6 +169,50 @@ class MMWaveNode(Node):
         if topic in self._publishers and topic not in self.active_filters:
             msg = Int32()
             msg.data = value
+            self._publishers[topic].publish(msg)
+
+    def _publish_hr(self, topic, value):
+        if topic in self._publishers and topic not in self.active_filters:
+            self.hr_seq += 1
+            msg = HR()
+            msg.hr = float(value)
+            msg.hr_quality = 0
+            header = HRheader()
+            header.device_serial_number = "0"
+            header.unit = "bpm"
+            header.sampling_frequency = 0.33
+            header.resolution = 1
+            header.accuracy = 0.85
+            header.max_range = 100
+            header.min_range = 0
+            header.stride_length = 0
+            header.window_size = 0
+            header.single_refresh_rate = 0.33
+            header.header.seq = self.hr_seq
+            header.header.stamp = self.get_clock().now().to_msg()
+            msg.header = header
+            self._publishers[topic].publish(msg)
+
+    def _publish_rr(self, topic, value):
+        if topic in self._publishers and topic not in self.active_filters:
+            self.rr_seq += 1
+            msg = RR()
+            msg.rr = float(value)
+            msg.rr_quality = 0
+            header = RRheader()
+            header.device_serial_number = "0"
+            header.unit = "bpm"
+            header.sampling_frequency = 0.33
+            header.resolution = 1
+            header.accuracy = 0.9
+            header.max_range = 25
+            header.min_range = 0
+            header.stride_length = 0
+            header.window_size = 0
+            header.single_refresh_rate = 0.33
+            header.header.seq = self.rr_seq
+            header.header.stamp = self.get_clock().now().to_msg()
+            msg.header = header
             self._publishers[topic].publish(msg)
 
     def _publish_float(self, topic, value):
