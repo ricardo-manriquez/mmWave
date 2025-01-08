@@ -180,7 +180,7 @@ class MMWaveNode(Node):
             header = HRHeader()
             header.device_serial_number = "0"
             header.unit = "bpm"
-            header.sampling_frequency = 1
+            header.sampling_frequency = 1 # real frequency is 0.333 but limited by message type
             header.resolution = 1.0
             header.accuracy = 0.85
             header.max_range = 100.0
@@ -200,7 +200,7 @@ class MMWaveNode(Node):
             header = RRHeader()
             header.device_serial_number = "0"
             header.unit = "bpm"
-            header.sampling_frequency = 1
+            header.sampling_frequency = 1 # real frequency is 0.333 but limited by message type
             header.resolution = 1.0
             header.accuracy = 0.9
             header.max_range = 25.0
