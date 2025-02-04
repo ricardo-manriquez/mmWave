@@ -6,10 +6,50 @@ from std_msgs.msg import Float32, Bool, Int32, String, Int32MultiArray
 from ros2_hc_msgs.msg import HR, RR, HRHeader, RRHeader
 from geometry_msgs.msg import Point
 
+from enum import Enum, auto
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
+
 from .driver.commands import commands
 from .driver.util import checksum, check_pkt, fill_checksum
 import struct
 import select
+
+class FilterCategories(str, Enum):
+    ALL = "all"
+    VITAL_SIGNS = "vital_signs"
+    PRESENCE = "presence"
+    SLEEP = "sleep"
+    ACTIVITY = "activity"
+
+# Define topic groups
+TOPIC_GROUPS = {
+    FilterCategories.VITAL_SIGNS: {
+        'heartrate',
+        'heartrate_waveform',
+        'respiratory_rate',
+        'respiratory_waveform',
+        'breathing'
+    },
+    FilterCategories.PRESENCE: {
+        'presence',
+        'distance',
+        'position'
+    },
+    FilterCategories.SLEEP: {
+        'bed_status',
+        'sleep_state',
+        'sleep_status',
+        'sleep_analysis',
+        'sleep_quality',
+        'sleep_abnormality'
+    },
+    FilterCategories.ACTIVITY: {
+        'movement',
+        'activity',
+        'struggling'
+    }
+}
 
 class MMWaveNode(Node):
     def __init__(self, ser):
@@ -64,27 +104,25 @@ class MMWaveNode(Node):
         self.hr_seq = 0
         self.rr_seq = 0
 
-    def check_filter_parameter(self):
-        """check if the filter parameter has been updated"""
-        filters_str = self.get_parameter('filters').value
-        if filters_str:
-            new_filters = set(filters_str.split(','))
-            if new_filters != self.active_filters:
-                self.active_filters = new_filters
-                self.get_logger().info(f'Updated filters: {self.active_filters}')
-        return SetPArametersResult(successful=True)
-
-    def is_topic_active(self, topic_name: str) -> bool:
-        """check if a topic is active based on the current filters"""
-        # if no filters are active, all topics are active
-        if not self.active_filters or FilterCategories.ALL in self.active_filters:
-            return True
-
-        # check if the topic is in any of the active filter categories
-        for filter_category in self.active_filters:
-            if filter_category in TOPIC_GROUPS and topic_name in TOPIC_GROUPS[filter_category]:
-                return True
-        return False
+    # Updating parameters
+    def check_filter_parameter(self, params):
+        for param in params:
+            if param.name == 'filters' and param.type_ == Parameter.Type.STRING:
+                filters_str = param.value
+                if filters_str:
+                    try:
+                        new_filters = set(filter_cat for filter_cat in filters_str.split(',')
+                                       if filter_cat in FilterCategories.__members__.values())
+                        if new_filters != self.active_filters:
+                            self.active_filters = new_filters
+                            self.get_logger().info(f'Updated filters: {self.active_filters}')
+                    except ValueError as e:
+                        self.get_logger().error(f'Invalid filter value: {e}')
+                        return SetParametersResult(successful=False, reason=str(e))
+                else:
+                    self.active_filters = set()
+                    self.get_logger().info('Cleared all filters')
+        return SetParametersResult(successful=True)
 
     def set_callback(self, callback):
         self.callback = callback
@@ -118,7 +156,6 @@ class MMWaveNode(Node):
             self.ser.close()
 
     def command_callback(self, cmd, response):
-        #print(cmd, response)
         if type(cmd) == type(self.cmds["REPORT_HUMAN_PRESENCE"]):
             self._publish_bool('presence', response["presence"])
         elif type(cmd) == type(self.cmds["REPORT_HUMAN_SPORTS_INFORMATION"]):
